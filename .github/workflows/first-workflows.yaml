@@ -1,6 +1,6 @@
 name: First Workflow 
 
-run-name: ${{github.username}}-first-workflow
+run-name: ${{ github.actor }}-first-workflow
 
 on: [push]
 
@@ -17,4 +17,8 @@ jobs:
         steps:
             - name: Run a shell command
               run: echo "Hello, this is my first GitHub Actions workflow!"
-    
+    greeting:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Greet the user
+              run: echo "Hello, ${{ github.actor }}! Welcome to your first GitHub Actions workflow."
