@@ -1,0 +1,16 @@
+name: workflow-commands
+run-name: ${{ github.actor }}-workflow-commands
+
+on: [push]
+
+jobs:
+    test_workflow_commands:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Test workflow commands
+              run: |
+                echo "This is a test of workflow commands."
+                echo "::warning::This is a warning message."
+                echo "::error::This is an error message."
+                echo "::notice::This is a notice message."
+                echo "Finished testing workflow commands."
