@@ -1,0 +1,22 @@
+name: workflow-three
+
+run-name: ${{ github.actor}}-workflow-three
+
+on : [push]
+
+jobs:
+    job_one:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Step One - Print Message
+              run: echo "This is the first step of workflow three."
+    job_two:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Step Two - List Files
+              run: ls -la
+    job_three:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Step Three - Show Date
+              run: date
