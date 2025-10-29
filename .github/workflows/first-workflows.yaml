@@ -1,0 +1,20 @@
+name: First Workflow 
+
+run-name: ${{github.username}}-first-workflow
+
+on: [push]
+
+jobs:
+    check_node_version:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check Node.js Version
+              run: node -v
+            - name: Check npm version
+              run: npm -v
+    shell_output:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Run a shell command
+              run: echo "Hello, this is my first GitHub Actions workflow!"
+    
