@@ -1,0 +1,63 @@
+name: List S3 Buckets
+on:
+  workflow_dispatch:
+    inputs:
+      aws_region:
+        description: "AWS region to use for the API calls"
+        required: false
+        default: "us-east-1"
+  schedule:
+    # Weekly inventory, Mondays at 06:00 UTC
+    - cron: "0 6 * * 1"
+# Required for OIDC federation with AWS
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  list-buckets:
+    name: Inventory S3 buckets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::938436319834:role/admin/gw-accountautomation-role
+          aws-region: ${{ inputs.aws_region || 'us-east-1' }}
+          role-session-name: gha-list-s3-${{ github.run_id }}
+      - name: Show caller identity
+        run: aws sts get-caller-identity
+      - name: List buckets
+        run: |
+          set -euo pipefail
+          aws s3api list-buckets \
+            --query 'Buckets[].[Name,CreationDate]' \
+            --output text \
+            | sort > buckets.tsv
+          echo "name,creation_date,region" > s3-buckets.csv
+          while IFS=$'\t' read -r name created; do
+            region=$(aws s3api get-bucket-location \
+              --bucket "$name" \
+              --query 'LocationConstraint' \
+              --output text 2>/dev/null || echo "unknown")
+            # us-east-1 is reported as "None" by the API
+            [ "$region" = "None" ] && region="us-east-1"
+            echo "$name,$created,$region" >> s3-buckets.csv
+          done < buckets.tsv
+          echo "Found $(( $(wc -l < s3-buckets.csv) - 1 )) bucket(s)."
+      - name: Write job summary
+        run: |
+          {
+            echo "## S3 Buckets"
+            echo ""
+            echo "| Bucket | Created | Region |"
+            echo "| --- | --- | --- |"
+            tail -n +2 s3-buckets.csv | while IFS=, read -r name created region; do
+              echo "| \`$name\` | $created | $region |"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: s3-bucket-inventory
+          path: s3-buckets.csv
+          if-no-files-found: error
